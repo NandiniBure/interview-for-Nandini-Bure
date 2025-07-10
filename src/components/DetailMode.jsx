@@ -3,12 +3,12 @@ import { formatDate } from "../utils/DateFormate";
 import { getStatusColor } from "../utils/StatusColor";
 import Wiki_logo from "../assets/wiki_logo.png";
 import NASA_logo from "../assets/nasa_logo.png";
-import YouTube_logo from "../assets/youtube_logo.png";
+import YouTube_logo from "../assets/youtube.png";
 const CRSCard = ({ data }) => {
   console.log("data=====>", data);
 
   return (
-    <div className=" min-w-[500px]  mx-auto p-4 bg-white shadow-lg rounded-xl border border-gray-200">
+    <div className=" w-[300px]  sm:w-[500px]  mx-auto p-4 bg-white shadow-lg rounded-xl border border-gray-200">
       <div className="flex items-start px-4 gap-4">
         {data.links?.patch.small && (
           <img
@@ -67,19 +67,19 @@ const CRSCard = ({ data }) => {
         </div>
       </div>
 
-      <p className="text-sm ml-2 text-gray-600 mt-1">
+      {data.links.details &&  <p className="text-sm ml-2 text-gray-600 mt-1">
         {data.links.details}{" "}
         {data.links.wikipedia && (
           <a
             href={data.links.wikipedia}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 underline"
+            className="text-blue-600 text-[10px] sm:text-[15px] underline"
           >
             Wikipedia
           </a>
         )}
-      </p>
+      </p>}
 
       <div className="mt-4 px-4 text-sm text-gray-800 space-y-2   ">
         {[
@@ -96,12 +96,12 @@ const CRSCard = ({ data }) => {
         ].map((item, index) => (
           <div
             key={index}
-            className={`flex justify-between  space-y-2 ${
+            className={`flex justify-between items-center  space-y-2 ${
               index === 9 ? "border-none" : "border-b"
             } py-1`}
           >
-            <span className="">{item.label}</span>
-            <span className="text-left w-[200px] items-start flex justify-start ">
+            <span className=" text-[10px] flex items-center  sm:text-[15px]">{item.label}</span>
+            <span className="text-left w-[100px] sm:w-[200px] text-[10px] sm:text-[15px] items-start flex justify-start ">
               {item.value}
             </span>
           </div>

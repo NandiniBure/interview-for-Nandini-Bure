@@ -283,7 +283,7 @@ const LaunchTable = () => {
       </div>
 
       {model && (
-        <div ref={modalRef} className=" absolute">
+        <div ref={modalRef} className="  absolute">
           <Model range={dateRange} setRange={setDateRange} />
         </div>
       )}

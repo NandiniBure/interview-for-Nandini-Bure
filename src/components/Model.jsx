@@ -1,11 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DateRangePicker } from "react-date-range";
 import { subWeeks, subMonths, isSameDay } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import "./style.css"; // custom CSS here
 
 const Model = ({ range, setRange }) => {
-  console.log(range);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const customRanges = [
     {
@@ -95,15 +105,18 @@ const Model = ({ range, setRange }) => {
   ];
 
   return (
-    <div className="flex  rounded-lg  shadow-lg bg-white p-6">
-      <DateRangePicker
-        onChange={(item) => setRange([item.selection])}
-        ranges={range}
-        months={2}
-        direction="horizontal"
-        staticRanges={customRanges}
-        inputRanges={[]} // disables "days from today" inputs
-      />
+    <div className="flex justify-center">
+      <div className="w-full  max-w-[300px] sm:max-w-[700px] bg-white rounded-lg shadow-lg p-4 sm:p-6 overflow-auto">
+        <DateRangePicker
+          onChange={(item) => setRange([item.selection])}
+          ranges={range}
+          months={isMobile ? 1 : 2}
+          direction={isMobile ? "vertical" : "horizontal"}
+          staticRanges={customRanges}
+          inputRanges={[]}
+          className="flex "
+        />
+      </div>
     </div>
   );
 };
