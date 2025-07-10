@@ -1,9 +1,17 @@
+import LaunchTable from "./components/Table";
+import Logo from "./assets/logo.png";
+
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 text-2xl text-blue-700">
-      Hello from React + Tailwind CSS!
+    <div className="   w-[100%]  flex flex-col  items-center  h-screen">
+      <div className=" pt-[10px] pb-[10px] shadow-lg w-full flex items-center justify-center mb-20">
+        <img src={Logo} />
+      </div>
+      <div className=" w-full bg-black">
+        <LaunchTable />
+      </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
