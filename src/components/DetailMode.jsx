@@ -5,8 +5,7 @@ import Wiki_logo from "../assets/wiki_logo.png";
 import NASA_logo from "../assets/nasa_logo.png";
 import YouTube_logo from "../assets/youtube.png";
 const CRSCard = ({ data }) => {
-  console.log("data=====>", data);
-
+  
   return (
     <div className=" w-[300px]  sm:w-[500px]  mx-auto p-4 bg-white shadow-lg rounded-xl border border-gray-200">
       <div className="flex items-start px-4 gap-4">

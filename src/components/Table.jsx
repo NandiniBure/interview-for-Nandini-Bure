@@ -7,8 +7,9 @@ import { Pagination } from "../utils/Pagination";
 import { getStatusColor } from "../utils/StatusColor";
 import { formatDate } from "../utils/DateFormate";
 import CRSCard from "./DetailMode";
+import ModalPortal from "./Modalportal";
 
-const LaunchTable = () => {
+const LaunchTable = ({ setBgblur }) => {
   const [launches, setLaunches] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -17,16 +18,20 @@ const LaunchTable = () => {
   const [detailModel, setDetailModel] = useState(false);
   const [model, setModel] = useState(false);
   const today = new Date();
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(today.getMonth() - 6);
+  const fiveYearsAgo = new Date(
+    today.getFullYear() - 5,
+    today.getMonth(),
+    today.getDate()
+  );
 
-  // Normalize time to start of day
-  sixMonthsAgo.setUTCHours(0, 0, 0, 0); // 00:00:00.000Z
-  today.setUTCHours(23, 59, 59, 999); // 23:59:59.999Z
+  // Normalize time
+  fiveYearsAgo.setUTCHours(0, 0, 0, 0); // Start of the day
+  today.setUTCHours(23, 59, 59, 999); // End of the day
   const [dateRange, setDateRange] = useState([
     {
-      startDate: sixMonthsAgo,
+      startDate: fiveYearsAgo,
       endDate: today,
+      label: "past 5 yrs",
       key: "selection",
     },
   ]);
@@ -34,15 +39,21 @@ const LaunchTable = () => {
   const fetchLaunches = async (pageNumber = 1) => {
     try {
       let query = {};
-      if (!dateRange || !dateRange[0]?.startDate || !dateRange[0]?.endDate) {
-        console.warn("Date range not set");
-        return;
-      }
+
+      const startDateISO = dateRange[0].startDate.toISOString();
+      const endDateISO = dateRange[0].endDate.toISOString();
+
+      query = {
+        date_utc: {
+          $gte: startDateISO,
+          $lte: endDateISO,
+        },
+      };
 
       if (filter === "upcoming") {
         query = { upcoming: true };
       } else if (filter === "success") {
-        query = {upcoming: false, success: true };
+        query = { upcoming: false, success: true };
       } else if (filter === "failed") {
         query = { upcoming: false, success: false };
       }
@@ -67,8 +78,8 @@ const LaunchTable = () => {
           let orbit = null;
           let rocketName = null;
           let rocketType = null;
-          let company=null;
-          let country=null;
+          let company = null;
+          let country = null;
           // Get launchpad name
           try {
             const padRes = await axios.get(
@@ -111,7 +122,7 @@ const LaunchTable = () => {
             rocketName,
             rocketType,
             company,
-            country
+            country,
           };
         })
       );
@@ -139,6 +150,7 @@ const LaunchTable = () => {
     const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
         setModel(false);
+        setBgblur(false);
       }
     };
 
@@ -151,11 +163,11 @@ const LaunchTable = () => {
     };
   }, [model]);
 
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (detailRef.current && !detailRef.current.contains(event.target)) {
         setDetailModel(false);
+        setBgblur(false);
       }
     };
 
@@ -168,8 +180,6 @@ const LaunchTable = () => {
     };
   }, [detailModel]);
 
-
-
   return (
     <div
       className={` 
@@ -177,17 +187,20 @@ const LaunchTable = () => {
     >
       <div className="   w-[90%] flex justify-between ">
         <div
-          onClick={() => setModel(true)}
+          onClick={() => {
+            setModel(true);
+            setBgblur(true);
+          }}
           className="inline-flex items-center justify-center  font-bold  px-3 py-1.5 rounded-md cursor-pointer text-sm text-gray-700 hover:bg-gray-100"
         >
-          <Calendar className="w-5 h-5 mr-2 text-black font-bold" />
-          <span className=" text-lg"></span>
-          <ChevronDown className="w-5 h-5 ml-2 mt-1 text-gray-600" />
+          <Calendar className="sm:w-5 sm:h-5 h-3 w-3  mr-2 text-black font-bold" />
+          <span className=" text-sm">{dateRange[0].label}</span>
+          <ChevronDown className="sm:w-5 sm:h-5 h-3 w-3  ml-2 mt-1 text-gray-600" />
         </div>
-        <div className="relative inline-flex items-center text-sm text-gray-700 border px-3 py-1.5 rounded-md shadow-sm hover:bg-gray-100">
-          <Filter className="w-4 h-4 mr-2 text-gray-600" />
+        <div className="relative inline-flex items-center text-sm text-gray-700 border  sm:px-3 py-1.5 rounded-md shadow-sm hover:bg-gray-100">
+          <Filter className="w-4 h-4 ml-1 mr-2 text-gray-600" />
           <select
-            className="appearance-none bg-transparent pr-6 focus:outline-none focus:ring-0 focus:border-none border-none cursor-pointer"
+            className="appearance-none bg-transparent  sm:pr-6 focus:outline-none focus:ring-0 focus:border-none border-none cursor-pointer"
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
@@ -218,7 +231,7 @@ const LaunchTable = () => {
             >
               <div className="overflow-x-auto">
                 <table className="   min-w-full text-sm text-left text-gray-700">
-                  <thead className="text-xs uppercase bg-gray-50 text-gray-500">
+                  <thead className=" text-[10px] sm:text-[12px] uppercase bg-gray-50 text-gray-500">
                     <tr>
                       <th className="px-4 py-3">No:</th>
                       <th className="px-4 py-3">Launched (UTC)</th>
@@ -229,10 +242,13 @@ const LaunchTable = () => {
                       <th className="px-4 py-3">Rocket</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className=" text-[10px] sm:text-[12px]">
                     {launches.map((launch, index) => (
                       <tr
-                        onClick={() => setDetailModel(launch)}
+                        onClick={() => {
+                          setDetailModel(launch);
+                          setBgblur(true);
+                        }}
                         key={launch.id}
                         className="border-b"
                       >
@@ -270,7 +286,10 @@ const LaunchTable = () => {
               </div>
             </div>
           ) : (
-            <p>No result found for this Specific filter</p>
+            <div className=" min-h-[300px] flex items-center justify-center">
+              {" "}
+              <p>No result found for this Specific filter</p>
+            </div>
           )}
         </>
       )}
@@ -281,17 +300,24 @@ const LaunchTable = () => {
           setCurrentPage={setPage}
         />
       </div>
-
       {model && (
-        <div ref={modalRef} className="  absolute">
-          <Model range={dateRange} setRange={setDateRange} />
-        </div>
+        <ModalPortal>
+          <div className="fixed inset-0 z-50 flex items-start justify-center pt-24">
+            <div ref={modalRef}>
+              <Model range={dateRange} setRange={setDateRange} />
+            </div>
+          </div>
+        </ModalPortal>
       )}
 
       {detailModel.id && (
-        <div ref={detailRef} className=" absolute">
-          <CRSCard data={detailModel} />
-        </div>
+        <ModalPortal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div ref={detailRef}>
+              <CRSCard data={detailModel} />
+            </div>
+          </div>
+        </ModalPortal>
       )}
     </div>
   );

@@ -3,14 +3,15 @@ import { DateRangePicker } from "react-date-range";
 import { subWeeks, subMonths, isSameDay } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import "./style.css"; // custom CSS here
+import "./style.css"; // your custom styles
 
 const Model = ({ range, setRange }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
+      setIsMobile(window.innerWidth <= 1024);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -102,20 +103,47 @@ const Model = ({ range, setRange }) => {
         );
       },
     },
+    {
+      label: "Past 5 years",
+      range: () => ({
+        startDate: subMonths(new Date(), 60),
+        endDate: new Date(),
+      }),
+      isSelected(range) {
+        const defined = this.range();
+        return (
+          isSameDay(range.startDate, defined.startDate) &&
+          isSameDay(range.endDate, defined.endDate)
+        );
+      },
+    },
   ];
 
   return (
     <div className="flex justify-center">
-      <div className="w-full  max-w-[300px] sm:max-w-[700px] bg-white rounded-lg shadow-lg p-4 sm:p-6 overflow-auto">
+      <div className="w-[300px] md:w-[600px] lg:w-[100%] bg-white rounded-lg shadow-lg p-4 sm:p-6 overflow-auto">
         <DateRangePicker
-          onChange={(item) => setRange([item.selection])}
+          onChange={(item) => {
+            const selected = item.selection;
+
+            const matched = customRanges.find((r) => r.isSelected(selected));
+            const label = matched ? matched.label : null;
+
+            setSelectedLabel(label);
+            setRange([{ ...selected, label }]);
+          }}
           ranges={range}
           months={isMobile ? 1 : 2}
           direction={isMobile ? "vertical" : "horizontal"}
           staticRanges={customRanges}
           inputRanges={[]}
-          className="flex "
         />
+
+        {selectedLabel && (
+          <p className="text-sm text-gray-600 mt-2 text-center">
+            Selected Range: <strong>{selectedLabel}</strong>
+          </p>
+        )}
       </div>
     </div>
   );
