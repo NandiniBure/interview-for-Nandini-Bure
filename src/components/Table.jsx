@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { subWeeks, subMonths, isSameDay } from "date-fns";
 import { Calendar, ChevronDown, Filter, LoaderIcon } from "lucide-react";
 import Model from "./Model";
 import { Pagination } from "../utils/Pagination";
