@@ -1,0 +1,16 @@
+/* Custom style for static range buttons */
+.rdrStaticRangeLabel {
+  @apply text-black text-sm px-2 py-1 rounded hover:bg-gray-100;
+}
+
+.rdrStaticRangeLabel {
+  color: black;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  width: auto;
+}
+
+.rdrStaticRangeLabel:hover {
+  background-color: #f3f4f6; /* gray-100 */
+}
