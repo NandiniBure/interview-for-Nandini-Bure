@@ -40,11 +40,11 @@ const LaunchTable = () => {
       }
 
       if (filter === "upcoming") {
-        query = { ...query, upcoming: true };
+        query = { upcoming: true };
       } else if (filter === "success") {
-        query = { ...query, upcoming: false, success: true };
+        query = {upcoming: false, success: true };
       } else if (filter === "failed") {
-        query = { ...query, upcoming: false, success: false };
+        query = { upcoming: false, success: false };
       }
 
       const response = await axios.post(
