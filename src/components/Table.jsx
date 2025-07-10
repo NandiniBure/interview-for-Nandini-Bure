@@ -1,16 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { subWeeks, subMonths, isSameDay } from "date-fns";
-import {
-  Calendar,
-  ChevronDown,
-  Filter,
-  LoaderIcon,
-} from "lucide-react";
+import { Calendar, ChevronDown, Filter, LoaderIcon } from "lucide-react";
 import Model from "./Model";
 import { Pagination } from "../utils/Pagination";
 import { getStatusColor } from "../utils/StatusColor";
 import { formatDate } from "../utils/DateFormate";
+import CRSCard from "./DetailMode";
 
 const LaunchTable = () => {
   const [launches, setLaunches] = useState([]);
@@ -18,11 +14,19 @@ const LaunchTable = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [detailModel, setDetailModel] = useState(false);
   const [model, setModel] = useState(false);
+  const today = new Date();
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+  // Normalize time to start of day
+  sixMonthsAgo.setUTCHours(0, 0, 0, 0); // 00:00:00.000Z
+  today.setUTCHours(23, 59, 59, 999); // 23:59:59.999Z
   const [dateRange, setDateRange] = useState([
     {
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 6)),
-      endDate: new Date(),
+      startDate: sixMonthsAgo,
+      endDate: today,
       key: "selection",
     },
   ]);
@@ -30,25 +34,17 @@ const LaunchTable = () => {
   const fetchLaunches = async (pageNumber = 1) => {
     try {
       let query = {};
-      const start = dateRange[0].startDate.toISOString();
-      const end = dateRange[0].endDate.toISOString();
-
-      console.log("Start:", start);
-      console.log("End:", end);
-
-      query = {
-        date_utc: {
-          $gte: start,
-          $lte: end,
-        },
-      };
+      if (!dateRange || !dateRange[0]?.startDate || !dateRange[0]?.endDate) {
+        console.warn("Date range not set");
+        return;
+      }
 
       if (filter === "upcoming") {
-        query = { upcoming: true };
+        query = { ...query, upcoming: true };
       } else if (filter === "success") {
-        query = { upcoming: false, success: true };
+        query = { ...query, upcoming: false, success: true };
       } else if (filter === "failed") {
-        query = { upcoming: false, success: false };
+        query = { ...query, upcoming: false, success: false };
       }
 
       const response = await axios.post(
@@ -62,7 +58,7 @@ const LaunchTable = () => {
           },
         }
       );
-
+      console.log(response);
       const launches = response.data.docs;
 
       const launchesWithDetails = await Promise.all(
@@ -70,7 +66,9 @@ const LaunchTable = () => {
           let launchpadName = null;
           let orbit = null;
           let rocketName = null;
-
+          let rocketType = null;
+          let company=null;
+          let country=null;
           // Get launchpad name
           try {
             const padRes = await axios.get(
@@ -99,6 +97,9 @@ const LaunchTable = () => {
               `https://api.spacexdata.com/v4/rockets/${launch.rocket}`
             );
             rocketName = rocketRes.data.name;
+            rocketType = rocketRes.data.type;
+            company = rocketRes.data.company;
+            country = rocketRes.data.country;
           } catch (err) {
             console.error("Error fetching rocket:", err);
           }
@@ -108,6 +109,9 @@ const LaunchTable = () => {
             launchpadName,
             orbit,
             rocketName,
+            rocketType,
+            company,
+            country
           };
         })
       );
@@ -128,6 +132,7 @@ const LaunchTable = () => {
   }, [page, filter, dateRange]);
 
   const modalRef = useRef(null);
+  const detailRef = useRef(null);
 
   // Close modal on outside click
   useEffect(() => {
@@ -146,16 +151,35 @@ const LaunchTable = () => {
     };
   }, [model]);
 
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (detailRef.current && !detailRef.current.contains(event.target)) {
+        setDetailModel(false);
+      }
+    };
+
+    if (detailModel) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [detailModel]);
+
+
+
   return (
     <div
       className={` 
          bg-white  w-full h-full min-h-[500px] relative  flex flex-col  items-center justify-center`}
     >
-      <div
-        onClick={() => setModel(true)}
-        className="   w-[90%] flex justify-between "
-      >
-        <div className="inline-flex items-center justify-center  font-bold  px-3 py-1.5 rounded-md cursor-pointer text-sm text-gray-700 hover:bg-gray-100">
+      <div className="   w-[90%] flex justify-between ">
+        <div
+          onClick={() => setModel(true)}
+          className="inline-flex items-center justify-center  font-bold  px-3 py-1.5 rounded-md cursor-pointer text-sm text-gray-700 hover:bg-gray-100"
+        >
           <Calendar className="w-5 h-5 mr-2 text-black font-bold" />
           <span className=" text-lg"></span>
           <ChevronDown className="w-5 h-5 ml-2 mt-1 text-gray-600" />
@@ -207,7 +231,11 @@ const LaunchTable = () => {
                   </thead>
                   <tbody>
                     {launches.map((launch, index) => (
-                      <tr key={launch.id} className="border-b">
+                      <tr
+                        onClick={() => setDetailModel(launch)}
+                        key={launch.id}
+                        className="border-b"
+                      >
                         <td className="px-4 py-3">{index + 1}</td>
                         <td className="px-4 py-3">
                           {formatDate(launch.date_utc)} IST
@@ -257,6 +285,12 @@ const LaunchTable = () => {
       {model && (
         <div ref={modalRef} className=" absolute">
           <Model range={dateRange} setRange={setDateRange} />
+        </div>
+      )}
+
+      {detailModel.id && (
+        <div ref={detailRef} className=" absolute">
+          <CRSCard data={detailModel} />
         </div>
       )}
     </div>
